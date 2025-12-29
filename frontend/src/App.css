@@ -1,0 +1,25 @@
+/* src/App.css - تم جدید */
+.App {
+  min-height: 100vh;
+  position: relative;
+}
+
+.App::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255,23,68,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(213,0,0,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(183,28,28,0.2) 0%, transparent 50%);
+  z-index: -1;
+  animation: shimmer 20s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}

@@ -1,0 +1,26 @@
+/* src/index.css - تم قرمز-سفید لوکس */
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Vazirmatn', -apple-system, sans-serif;
+  direction: rtl;
+  unicode-bidi: embed;
+  background: linear-gradient(135deg, 
+    #ff1744 0%, 
+    #d50000 25%, 
+    #b71c1c 50%, 
+    #7f0000 100%);
+  min-height: 100vh;
+  background-attachment: fixed;
+}
+
+#root {
+  min-height: 100vh;
+  backdrop-filter: blur(10px);
+}
