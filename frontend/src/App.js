@@ -1,12 +1,12 @@
 // src/App.js
 import React from 'react';
-import DeclarationCalculator from './components/DeclarationCalculator';
+import LoyaltyTaxCalculator from './components/LoyaltyTaxCalculator';
 import './App.css';
 
 function App() {
   return (
     <div className="App">
-      <DeclarationCalculator />
+      <LoyaltyTaxCalculator />
     </div>
   );
 }
