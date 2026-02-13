@@ -928,3 +928,55 @@
     width: 100%;
   }
 }
+
+/* استایل‌های جدید برای رگرسیون و میانگین */
+.averages-section,
+.regression-section {
+  background: rgba(255, 249, 196, 0.3);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.mini-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #d50000;
+  margin: 0 0 15px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mini-title::before {
+  content: '📊';
+  font-size: 1.2rem;
+}
+
+.estimate-grid.compact {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.regression-info {
+  display: block;
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 4px;
+  font-family: 'Courier New', monospace;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 23, 68, 0.1);
+}
+
+.result-calculation {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 6px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  border: 1px solid rgba(255, 23, 68, 0.1);
+}

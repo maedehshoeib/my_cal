@@ -146,86 +146,147 @@ export default function LoyaltyTaxCalculator() {
       // =============================================
       // مرحله ۱: محاسبات تعدیل
       // =============================================
-      // برای هر سال:
-      // فروش ابرازی تعدیلی = فروش ابرازی × ضریب تبدیل سال
-      // فروش قطعی تعدیلی = فروش قطعی شده × ضریب تبدیل سال
-      // درآمد ابرازی تعدیلی = درآمد ابرازی × ضریب تبدیل سال
-      // درآمد قطعی تعدیلی = درآمد قطعی شده × ضریب تبدیل سال
-      // سود ابرازی تعدیلی = سود ابرازی × ضریب تبدیل سال
-      // سود قطعی تعدیلی = سود قطعی شده × ضریب تبدیل سال
+      // فرمول تعدیل طبق فایل اکسل:
+      // مقدار تعدیلی = مقدار اصلی + (ضریب تبدیل × مقدار اصلی)
+      // یا: مقدار تعدیلی = مقدار اصلی × (1 + ضریب تبدیل)
       
       const adjustedYearData = {};
       Object.entries(yearData).forEach(([key, year]) => {
-        const factor = parseFloat(year.conversionFactor) || 1;
+        const factor = parseFloat(year.conversionFactor) || 0;
+        const declaredSales = parseNumber(year.declaredSales);
+        const finalizedSales = parseNumber(year.finalizedSales);
+        const declaredIncome = parseNumber(year.declaredIncome);
+        const finalizedIncome = parseNumber(year.finalizedIncome);
+        const declaredProfit = parseNumber(year.declaredProfit);
+        const finalizedProfit = parseNumber(year.finalizedProfit);
+        
         adjustedYearData[key] = {
           label: year.label,
-          declaredSalesAdj: parseNumber(year.declaredSales) * factor,
-          finalizedSalesAdj: parseNumber(year.finalizedSales) * factor,
-          declaredIncomeAdj: parseNumber(year.declaredIncome) * factor,
-          finalizedIncomeAdj: parseNumber(year.finalizedIncome) * factor,
-          declaredProfitAdj: parseNumber(year.declaredProfit) * factor,
-          finalizedProfitAdj: parseNumber(year.finalizedProfit) * factor
+          // فرمول: مقدار + (ضریب × مقدار) = مقدار × (1 + ضریب)
+          declaredSalesAdj: declaredSales + (factor * declaredSales),
+          finalizedSalesAdj: finalizedSales + (factor * finalizedSales),
+          declaredIncomeAdj: declaredIncome + (factor * declaredIncome),
+          finalizedIncomeAdj: finalizedIncome + (factor * finalizedIncome),
+          declaredProfitAdj: declaredProfit + (factor * declaredProfit),
+          finalizedProfitAdj: finalizedProfit + (factor * finalizedProfit),
+          // مقادیر اصلی (بدون تعدیل)
+          declaredSales,
+          finalizedSales,
+          declaredIncome,
+          finalizedIncome,
+          declaredProfit,
+          finalizedProfit
         };
       });
 
       // =============================================
-      // مرحله ۲: تخمین سال جاری
+      // مرحله ۲: پیش‌بینی سال چهارم با رگرسیون خطی
       // =============================================
-      // براساس روند رشد ۳ سال گذشته (میانگین رشد)
-      // مقدار تخمینی سال X = مقدار سال X-1 × (رشد متوسط سالانه + 1)
+      // فرمول رگرسیون طبق فایل اکسل: y = bx + y0
+      // b (ضریب افزایش) = میانگین افزایش سالیانه
+      // b = ((مقدار_سال2 - مقدار_سال1) + (مقدار_سال3 - مقدار_سال2)) / 2
+      // y0 (مبنای پایه) = مقدار_سال1 - (b × 1)
+      // پیش‌بینی سال 4 = (4 × b) + y0
       
-      // مقادیر تعدیل شده: year3 (سال سوم قبل) -> year2 (سال دوم قبل) -> year1 (سال قبل)
-      const y3 = adjustedYearData.year3;
-      const y2 = adjustedYearData.year2;
-      const y1 = adjustedYearData.year1;
+      const y3 = adjustedYearData.year3; // سال سوم قبل (قدیمی‌ترین)
+      const y2 = adjustedYearData.year2; // سال دوم قبل
+      const y1 = adjustedYearData.year1; // سال قبل (جدیدترین)
 
-      // تابع محاسبه نرخ رشد متوسط
-      const calcAvgGrowth = (v1, v2, v3) => {
-        // v3 = سال سوم قبل, v2 = سال دوم قبل, v1 = سال قبل
-        if (v3 === 0 && v2 === 0) return 0;
+      // تابع محاسبه رگرسیون خطی
+      const calcLinearRegression = (v1, v2, v3) => {
+        // v1 = سال سوم قبل (قدیمی‌ترین)
+        // v2 = سال دوم قبل
+        // v3 = سال قبل (جدیدترین)
         
-        let growthRates = [];
+        // محاسبه b (ضریب افزایش)
+        const b = ((v2 - v1) + (v3 - v2)) / 2;
         
-        // رشد از سال سوم به سال دوم
-        if (v3 > 0) {
-          growthRates.push((v2 - v3) / v3);
-        }
+        // محاسبه y0 (مبنای پایه)
+        const y0 = v1 - (b * 1);
         
-        // رشد از سال دوم به سال قبل
-        if (v2 > 0) {
-          growthRates.push((v1 - v2) / v2);
-        }
+        // پیش‌بینی سال 4
+        const prediction = (4 * b) + y0;
         
-        if (growthRates.length === 0) return 0;
-        
-        // میانگین نرخ رشد
-        return growthRates.reduce((sum, r) => sum + r, 0) / growthRates.length;
+        return {
+          b,
+          y0,
+          prediction: prediction > 0 ? prediction : 0 // جلوگیری از مقادیر منفی
+        };
       };
 
-      // محاسبه نرخ رشد متوسط برای هر شاخص
-      const growthDeclaredSales = calcAvgGrowth(y3.declaredSalesAdj, y2.declaredSalesAdj, y1.declaredSalesAdj);
-      const growthFinalizedSales = calcAvgGrowth(y3.finalizedSalesAdj, y2.finalizedSalesAdj, y1.finalizedSalesAdj);
-      const growthDeclaredIncome = calcAvgGrowth(y3.declaredIncomeAdj, y2.declaredIncomeAdj, y1.declaredIncomeAdj);
-      const growthFinalizedIncome = calcAvgGrowth(y3.finalizedIncomeAdj, y2.finalizedIncomeAdj, y1.finalizedIncomeAdj);
-      const growthDeclaredProfit = calcAvgGrowth(y3.declaredProfitAdj, y2.declaredProfitAdj, y1.declaredProfitAdj);
-      const growthFinalizedProfit = calcAvgGrowth(y3.finalizedProfitAdj, y2.finalizedProfitAdj, y1.finalizedProfitAdj);
+      // محاسبه رگرسیون برای ابرازی
+      const regressionDeclaredSales = calcLinearRegression(
+        y3.declaredSalesAdj,
+        y2.declaredSalesAdj,
+        y1.declaredSalesAdj
+      );
+      
+      const regressionDeclaredIncome = calcLinearRegression(
+        y3.declaredIncomeAdj,
+        y2.declaredIncomeAdj,
+        y1.declaredIncomeAdj
+      );
+      
+      const regressionDeclaredProfit = calcLinearRegression(
+        y3.declaredProfitAdj,
+        y2.declaredProfitAdj,
+        y1.declaredProfitAdj
+      );
 
-      // تخمین سال جاری: مقدار سال X-1 × (رشد متوسط + 1)
+      // محاسبه رگرسیون برای قطعی
+      const regressionFinalizedSales = calcLinearRegression(
+        y3.finalizedSalesAdj,
+        y2.finalizedSalesAdj,
+        y1.finalizedSalesAdj
+      );
+      
+      const regressionFinalizedIncome = calcLinearRegression(
+        y3.finalizedIncomeAdj,
+        y2.finalizedIncomeAdj,
+        y1.finalizedIncomeAdj
+      );
+      
+      const regressionFinalizedProfit = calcLinearRegression(
+        y3.finalizedProfitAdj,
+        y2.finalizedProfitAdj,
+        y1.finalizedProfitAdj
+      );
+
+      // محاسبه میانگین هم‌وزن شده سه سال
+      // میانگین = (مقدار سال 1 + مقدار سال 2 + مقدار سال 3) / 3
+      const avgDeclaredSales = (y3.declaredSalesAdj + y2.declaredSalesAdj + y1.declaredSalesAdj) / 3;
+      const avgFinalizedSales = (y3.finalizedSalesAdj + y2.finalizedSalesAdj + y1.finalizedSalesAdj) / 3;
+      const avgDeclaredIncome = (y3.declaredIncomeAdj + y2.declaredIncomeAdj + y1.declaredIncomeAdj) / 3;
+      const avgFinalizedIncome = (y3.finalizedIncomeAdj + y2.finalizedIncomeAdj + y1.finalizedIncomeAdj) / 3;
+      const avgDeclaredProfit = (y3.declaredProfitAdj + y2.declaredProfitAdj + y1.declaredProfitAdj) / 3;
+      const avgFinalizedProfit = (y3.finalizedProfitAdj + y2.finalizedProfitAdj + y1.finalizedProfitAdj) / 3;
+
+      // تخمین سال جاری: استفاده از پیش‌بینی رگرسیون
       const currentYearEstimate = {
-        declaredSalesAdj: y1.declaredSalesAdj * (1 + growthDeclaredSales),
-        finalizedSalesAdj: y1.finalizedSalesAdj * (1 + growthFinalizedSales),
-        declaredIncomeAdj: y1.declaredIncomeAdj * (1 + growthDeclaredIncome),
-        finalizedIncomeAdj: y1.finalizedIncomeAdj * (1 + growthFinalizedIncome),
-        declaredProfitAdj: y1.declaredProfitAdj * (1 + growthDeclaredProfit),
-        finalizedProfitAdj: y1.finalizedProfitAdj * (1 + growthFinalizedProfit),
-        // ذخیره نرخ‌های رشد برای نمایش
-        growthRates: {
-          declaredSales: (growthDeclaredSales * 100).toFixed(1),
-          finalizedSales: (growthFinalizedSales * 100).toFixed(1),
-          declaredIncome: (growthDeclaredIncome * 100).toFixed(1),
-          finalizedIncome: (growthFinalizedIncome * 100).toFixed(1),
-          declaredProfit: (growthDeclaredProfit * 100).toFixed(1),
-          finalizedProfit: (growthFinalizedProfit * 100).toFixed(1)
+        // پیش‌بینی با رگرسیون
+        declaredSalesAdj: regressionDeclaredSales.prediction,
+        finalizedSalesAdj: regressionFinalizedSales.prediction,
+        declaredIncomeAdj: regressionDeclaredIncome.prediction,
+        finalizedIncomeAdj: regressionFinalizedIncome.prediction,
+        declaredProfitAdj: regressionDeclaredProfit.prediction,
+        finalizedProfitAdj: regressionFinalizedProfit.prediction,
+        
+        // میانگین‌ها برای نمایش
+        avgDeclaredSales,
+        avgFinalizedSales,
+        avgDeclaredIncome,
+        avgFinalizedIncome,
+        avgDeclaredProfit,
+        avgFinalizedProfit,
+        
+        // ضرایب رگرسیون برای نمایش
+        regressionCoefficients: {
+          declaredSales: { b: regressionDeclaredSales.b.toFixed(2), y0: regressionDeclaredSales.y0.toFixed(2) },
+          finalizedSales: { b: regressionFinalizedSales.b.toFixed(2), y0: regressionFinalizedSales.y0.toFixed(2) },
+          declaredIncome: { b: regressionDeclaredIncome.b.toFixed(2), y0: regressionDeclaredIncome.y0.toFixed(2) },
+          finalizedIncome: { b: regressionFinalizedIncome.b.toFixed(2), y0: regressionFinalizedIncome.y0.toFixed(2) },
+          declaredProfit: { b: regressionDeclaredProfit.b.toFixed(2), y0: regressionDeclaredProfit.y0.toFixed(2) },
+          finalizedProfit: { b: regressionFinalizedProfit.b.toFixed(2), y0: regressionFinalizedProfit.y0.toFixed(2) }
         }
       };
 
@@ -240,11 +301,17 @@ export default function LoyaltyTaxCalculator() {
       // =============================================
       // مرحله ۴: محاسبه ضریب وفاداری و تخفیف
       // =============================================
-      // نمره کل = تعداد تیک‌های انتخاب شده (محاسبه شده در بالا)
-      // ضریب وفاداری = نمره کل ÷ 25 (محاسبه شده در loyaltyFactor)
-      // تخفیف نهایی = ضریب وفاداری × ماکزیمم درصد تخفیف
-      const maxDiscountPercent = parseNumber(maxDiscount) || 0;
-      const actualDiscountPercent = loyaltyFactor * maxDiscountPercent;
+      // طبق فرمول فایل اکسل (شیت دوم - ردیف 35):
+      // درصد تخفیف اعمالی = (مجموع وزن آیتم‌های مودی / ماکزیمم ضرایب مودیان نمونه) × ماکزیمم درصد تخفیف
+      // مجموع وزن آیتم‌های مودی = نمره کل (تعداد تیک‌ها)
+      // ماکزیمم ضرایب مودیان نمونه = 25
+      // ماکزیمم درصد تخفیف = 50% (یا مقدار وارد شده توسط کاربر)
+      
+      const maxDiscountPercent = parseNumber(maxDiscount) || 50; // پیش‌فرض 50%
+      const maxLoyaltyScore = 25; // ماکزیمم ضرایب طبق فایل اکسل
+      
+      // فرمول: (نمره_کل / 25) × ماکزیمم_درصد_تخفیف
+      const actualDiscountPercent = (performanceScore / maxLoyaltyScore) * maxDiscountPercent;
       
       // =============================================
       // مرحله ۵: محاسبه مالیات نهایی
@@ -451,13 +518,13 @@ export default function LoyaltyTaxCalculator() {
         
         <div className="field-row single">
           <div className="input-group">
-            <label>ضریب تبدیل سال</label>
+            <label>ضریب تبدیل سال (شاخص تولیدکننده بانک مرکزی)</label>
             <div className="input-wrapper">
               <input
                 type="text"
                 value={yearInfo.conversionFactor}
                 onChange={(e) => handleYearDataChange(yearKey, 'conversionFactor', e.target.value)}
-                placeholder="1.0"
+                placeholder="0.15"
               />
             </div>
           </div>
@@ -626,13 +693,13 @@ export default function LoyaltyTaxCalculator() {
           {/* ماکزیمم درصد تخفیف */}
           <div className="discount-section">
             <div className="input-group discount-input">
-              <label>ماکزیمم درصد تخفیف</label>
+              <label>ماکزیمم درصد تخفیف (پیش‌فرض: 50%)</label>
               <div className="input-wrapper">
                 <input
                   type="text"
                   value={maxDiscount}
                   onChange={(e) => setMaxDiscount(e.target.value)}
-                  placeholder="0"
+                  placeholder="50"
                 />
                 <span className="unit">%</span>
               </div>
@@ -710,39 +777,75 @@ export default function LoyaltyTaxCalculator() {
               </div>
             </div>
 
-            {/* ب) تخمین سال جاری */}
+            {/* ب) تخمین سال جاری با رگرسیون خطی */}
             <div className="current-year-estimate">
-              <h3 className="subsection-title">ب) تخمین سال جاری (سال X) - بر اساس میانگین رشد</h3>
-              <div className="estimate-grid">
-                <div className="estimate-item">
-                  <span className="estimate-label">فروش ابرازی تعدیلی تخمینی:</span>
-                  <span className="estimate-value">{formatNumber(result.currentYearEstimate.declaredSalesAdj)} ریال</span>
-                  <span className="growth-rate">رشد: {result.currentYearEstimate.growthRates.declaredSales}%</span>
+              <h3 className="subsection-title">ب) تخمین سال چهارم با رگرسیون خطی (y = bx + y0)</h3>
+              
+              {/* نمایش میانگین‌ها */}
+              <div className="averages-section">
+                <h4 className="mini-title">میانگین هم‌وزن شده سه سال</h4>
+                <div className="estimate-grid compact">
+                  <div className="estimate-item">
+                    <span className="estimate-label">فروش ابرازی:</span>
+                    <span className="estimate-value">{formatNumber(result.currentYearEstimate.avgDeclaredSales)} ریال</span>
+                  </div>
+                  <div className="estimate-item">
+                    <span className="estimate-label">فروش قطعی:</span>
+                    <span className="estimate-value">{formatNumber(result.currentYearEstimate.avgFinalizedSales)} ریال</span>
+                  </div>
+                  <div className="estimate-item">
+                    <span className="estimate-label">درآمد ابرازی:</span>
+                    <span className="estimate-value">{formatNumber(result.currentYearEstimate.avgDeclaredIncome)} ریال</span>
+                  </div>
+                  <div className="estimate-item">
+                    <span className="estimate-label">درآمد قطعی:</span>
+                    <span className="estimate-value">{formatNumber(result.currentYearEstimate.avgFinalizedIncome)} ریال</span>
+                  </div>
+                  <div className="estimate-item">
+                    <span className="estimate-label">سود ابرازی:</span>
+                    <span className="estimate-value">{formatNumber(result.currentYearEstimate.avgDeclaredProfit)} ریال</span>
+                  </div>
+                  <div className="estimate-item">
+                    <span className="estimate-label">سود قطعی:</span>
+                    <span className="estimate-value">{formatNumber(result.currentYearEstimate.avgFinalizedProfit)} ریال</span>
+                  </div>
                 </div>
-                <div className="estimate-item">
-                  <span className="estimate-label">فروش قطعی تعدیلی تخمینی:</span>
-                  <span className="estimate-value">{formatNumber(result.currentYearEstimate.finalizedSalesAdj)} ریال</span>
-                  <span className="growth-rate">رشد: {result.currentYearEstimate.growthRates.finalizedSales}%</span>
-                </div>
-                <div className="estimate-item">
-                  <span className="estimate-label">درآمد ابرازی تعدیلی تخمینی:</span>
-                  <span className="estimate-value">{formatNumber(result.currentYearEstimate.declaredIncomeAdj)} ریال</span>
-                  <span className="growth-rate">رشد: {result.currentYearEstimate.growthRates.declaredIncome}%</span>
-                </div>
-                <div className="estimate-item">
-                  <span className="estimate-label">درآمد قطعی تعدیلی تخمینی:</span>
-                  <span className="estimate-value">{formatNumber(result.currentYearEstimate.finalizedIncomeAdj)} ریال</span>
-                  <span className="growth-rate">رشد: {result.currentYearEstimate.growthRates.finalizedIncome}%</span>
-                </div>
-                <div className="estimate-item">
-                  <span className="estimate-label">سود ابرازی تعدیلی تخمینی:</span>
-                  <span className="estimate-value">{formatNumber(result.currentYearEstimate.declaredProfitAdj)} ریال</span>
-                  <span className="growth-rate">رشد: {result.currentYearEstimate.growthRates.declaredProfit}%</span>
-                </div>
-                <div className="estimate-item highlight">
-                  <span className="estimate-label">سود قطعی تعدیلی تخمینی:</span>
-                  <span className="estimate-value">{formatNumber(result.currentYearEstimate.finalizedProfitAdj)} ریال</span>
-                  <span className="growth-rate">رشد: {result.currentYearEstimate.growthRates.finalizedProfit}%</span>
+              </div>
+
+              {/* نمایش پیش‌بینی رگرسیون */}
+              <div className="regression-section">
+                <h4 className="mini-title">پیش‌بینی سال چهارم (رگرسیون)</h4>
+                <div className="estimate-grid">
+                  <div className="estimate-item">
+                    <span className="estimate-label">فروش ابرازی تخمینی:</span>
+                    <span className="estimate-value">{formatNumber(result.currentYearEstimate.declaredSalesAdj)} ریال</span>
+                    <span className="regression-info">b={result.currentYearEstimate.regressionCoefficients.declaredSales.b}, y0={result.currentYearEstimate.regressionCoefficients.declaredSales.y0}</span>
+                  </div>
+                  <div className="estimate-item">
+                    <span className="estimate-label">فروش قطعی تخمینی:</span>
+                    <span className="estimate-value">{formatNumber(result.currentYearEstimate.finalizedSalesAdj)} ریال</span>
+                    <span className="regression-info">b={result.currentYearEstimate.regressionCoefficients.finalizedSales.b}, y0={result.currentYearEstimate.regressionCoefficients.finalizedSales.y0}</span>
+                  </div>
+                  <div className="estimate-item">
+                    <span className="estimate-label">درآمد ابرازی تخمینی:</span>
+                    <span className="estimate-value">{formatNumber(result.currentYearEstimate.declaredIncomeAdj)} ریال</span>
+                    <span className="regression-info">b={result.currentYearEstimate.regressionCoefficients.declaredIncome.b}, y0={result.currentYearEstimate.regressionCoefficients.declaredIncome.y0}</span>
+                  </div>
+                  <div className="estimate-item">
+                    <span className="estimate-label">درآمد قطعی تخمینی:</span>
+                    <span className="estimate-value">{formatNumber(result.currentYearEstimate.finalizedIncomeAdj)} ریال</span>
+                    <span className="regression-info">b={result.currentYearEstimate.regressionCoefficients.finalizedIncome.b}, y0={result.currentYearEstimate.regressionCoefficients.finalizedIncome.y0}</span>
+                  </div>
+                  <div className="estimate-item highlight">
+                    <span className="estimate-label">سود ابرازی تخمینی:</span>
+                    <span className="estimate-value">{formatNumber(result.currentYearEstimate.declaredProfitAdj)} ریال</span>
+                    <span className="regression-info">b={result.currentYearEstimate.regressionCoefficients.declaredProfit.b}, y0={result.currentYearEstimate.regressionCoefficients.declaredProfit.y0}</span>
+                  </div>
+                  <div className="estimate-item highlight">
+                    <span className="estimate-label">سود قطعی تخمینی:</span>
+                    <span className="estimate-value">{formatNumber(result.currentYearEstimate.finalizedProfitAdj)} ریال</span>
+                    <span className="regression-info">b={result.currentYearEstimate.regressionCoefficients.finalizedProfit.b}, y0={result.currentYearEstimate.regressionCoefficients.finalizedProfit.y0}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -778,7 +881,10 @@ export default function LoyaltyTaxCalculator() {
                     {result.actualDiscountPercent}%
                   </div>
                   <div className="result-formula">
-                    ضریب وفاداری × حداکثر تخفیف
+                    (نمره کل / 25) × حداکثر تخفیف
+                  </div>
+                  <div className="result-calculation">
+                    ({result.performanceScore} / 25) × {result.maxDiscountPercent}% = {result.actualDiscountPercent}%
                   </div>
                 </div>
               </div>
