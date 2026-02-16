@@ -1,0 +1,77 @@
+# =====================================
+# Docker Compose - Development Mode
+# =====================================
+version: '3.8'
+
+services:
+  # ==================== Backend Service (Development) ====================
+  backend:
+    container_name: tax_calculator_backend_dev
+    build: 
+      context: .
+      dockerfile: Dockerfile.backend
+      target: production
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount code برای hot reload
+      - ./backend:/app/backend:ro
+      - ./main.py:/app/main.py:ro
+      - backend_data:/app/data
+    environment:
+      - ENV=development
+      - DATABASE_PATH=/app/data/tax_calculator.db
+      - LOG_LEVEL=debug
+      - CORS_ORIGINS=http://localhost,http://localhost:3000,http://localhost:80
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - tax_calculator_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ==================== Frontend Service (Development) ====================
+  frontend:
+    container_name: tax_calculator_frontend_dev
+    image: node:20-alpine
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount code برای hot reload
+      - ./frontend:/app
+      - /app/node_modules  # Exclude node_modules
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_API_URL=http://localhost:8000
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    command: sh -c "npm install && npm start"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - tax_calculator_network
+    stdin_open: true
+    tty: true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ==================== Networks ====================
+networks:
+  tax_calculator_network:
+    driver: bridge
+    name: tax_calculator_network_dev
+
+# ==================== Volumes ====================
+volumes:
+  backend_data:
+    driver: local
+    name: tax_calculator_data_dev

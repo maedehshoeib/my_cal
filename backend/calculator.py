@@ -53,7 +53,7 @@ class TaxCalculator:
         net_profit = gross_profit - self.pl_statement.admin_expenses
         return max(0, net_profit)
     
-    def _calculate_progressive_tax(self, income: int) -> int:
+    def _calculate_progressive_tax(self, income: int) -> float:
         """محاسبه مالیات پلکانی"""
         tax = 0
         remaining = income
@@ -64,7 +64,7 @@ class TaxCalculator:
             
             bracket_size = max_income - min_income if max_income != float('inf') else remaining
             taxable_in_bracket = min(remaining, bracket_size)
-            tax += int(taxable_in_bracket * rate)
+            tax += taxable_in_bracket * rate
             remaining -= taxable_in_bracket
         
         return tax
@@ -93,9 +93,15 @@ class TaxCalculator:
         
         # سه سناریو محاسبه
         scenarios = {
-            "intack_based": self._create_scenario(taxable_income, "بر اساس نسبت سود فعالیت"),
-            "auditor_ideal": self._create_scenario(int(taxable_income * 1.1), "ایده‌ال ممیز"),
-            "declaration_proposal": self._create_scenario_with_discount(taxable_income, "پیشنهاد ابرازی")
+            "intack_based": self._create_scenario(
+                taxable_income, "بر اساس نسبت سود فعالیت"
+            ),
+            "auditor_ideal": self._create_scenario(
+                taxable_income * 1.1, "ایده‌ال ممیز"
+            ),
+            "declaration_proposal": self._create_scenario_with_discount(
+                taxable_income, "پیشنهاد ابرازی"
+            )
         }
         
         return {
@@ -124,8 +130,9 @@ class TaxCalculator:
     def _create_scenario_with_discount(self, income: int, method: str) -> Dict:
         """سناریو با تخفیف"""
         base_tax = self._calculate_progressive_tax(income)
-        discount = min(0.05, income / 1_000_000_000 * 0.01)  # 1% به ازای هر میلیارد
-        final_tax = int(base_tax * (1 - discount))
+        # 1% به ازای هر میلیارد
+        discount = min(0.05, income / 1_000_000_000 * 0.01)
+        final_tax = base_tax * (1 - discount)
         
         return {
             "method": method,

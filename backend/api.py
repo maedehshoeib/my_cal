@@ -11,7 +11,20 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from calculator import TaxCalculator, Activity, ProfitLossStatement
 from models import DeclarationRequest
 
+# Import database router
+try:
+    from api_db import router as db_router
+    DB_AVAILABLE = True
+except ImportError:
+    DB_AVAILABLE = False
+    print("⚠️ Database module not available")
+
 app = FastAPI(title="ماشین حساب اظهارنامه")
+
+# Include database router if available
+if DB_AVAILABLE:
+    app.include_router(db_router)
+    print("✅ Database routes registered")
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,6 +37,18 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {"status": "working"}
+
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint برای Docker"""
+    return {
+        "status": "healthy",
+        "service": "tax_calculator_backend",
+        "timestamp": datetime.now().isoformat(),
+        "database": DB_AVAILABLE
+    }
+
 
 @app.post("/api/v1/calculate")
 async def calculate_declaration(request: DeclarationRequest):

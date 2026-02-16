@@ -493,6 +493,63 @@
   background: rgba(232, 245, 233, 0.7);
 }
 
+/* هایلایت ردیف مالیات اولیه */
+.base-tax-row {
+  background: rgba(255, 193, 7, 0.15) !important;
+  border-top: 2px solid #ffc107 !important;
+  border-bottom: 2px solid #ffc107 !important;
+}
+
+.base-tax-row:hover {
+  background: rgba(255, 193, 7, 0.25) !important;
+}
+
+.base-tax-label {
+  font-weight: 700 !important;
+  color: #ff6f00 !important;
+  font-size: 1.05rem !important;
+}
+
+.base-tax-cell {
+  font-weight: 700 !important;
+  color: #f57c00 !important;
+  font-size: 1.05rem !important;
+  background: rgba(255, 193, 7, 0.08);
+}
+
+/* هایلایت ردیف مالیات نهایی */
+.final-row {
+  background: linear-gradient(135deg, rgba(0, 200, 83, 0.15), rgba(46, 125, 50, 0.15)) !important;
+  border-top: 3px solid #00c853 !important;
+  border-bottom: 3px solid #00c853 !important;
+  box-shadow: 0 2px 8px rgba(0, 200, 83, 0.2);
+}
+
+.final-row:hover {
+  background: linear-gradient(135deg, rgba(0, 200, 83, 0.25), rgba(46, 125, 50, 0.25)) !important;
+  box-shadow: 0 4px 12px rgba(0, 200, 83, 0.3);
+}
+
+.final-label {
+  font-weight: 800 !important;
+  color: #2e7d32 !important;
+  font-size: 1.1rem !important;
+  text-shadow: 0 1px 2px rgba(0, 200, 83, 0.2);
+}
+
+.final-cell {
+  font-weight: 800 !important;
+  color: #00c853 !important;
+  font-size: 1.15rem !important;
+  background: rgba(0, 200, 83, 0.1);
+  text-shadow: 0 1px 2px rgba(0, 200, 83, 0.1);
+}
+
+.discount-cell {
+  color: #d50000;
+  font-weight: 600;
+}
+
 /* تخمین سال جاری */
 .current-year-estimate {
   margin-bottom: 35px;

@@ -1,21 +1,51 @@
-# frontend/Dockerfile (Multi-stage Production)
+# =====================================
+# Frontend Dockerfile (Multi-stage Production)
+# =====================================
+
+# Stage 1: Builder - Build React App
 FROM node:20-alpine AS builder
 
 WORKDIR /app
-COPY frontend/package*.json ./
-RUN npm ci --only=production
 
+# کپی package files
+COPY frontend/package*.json ./
+
+# نصب dependencies
+RUN npm ci --silent
+
+# کپی کل کد frontend
 COPY frontend/ .
+
+# Build production
 RUN npm run build
 
-# Production Nginx
-FROM nginx:alpine AS production
+# Stage 2: Production - Nginx Server
+FROM nginx:1.25-alpine AS production
 
-# کپی build
+# نصب curl برای healthcheck
+RUN apk add --no-cache curl
+
+# حذف default nginx config
+RUN rm /etc/nginx/conf.d/default.conf
+
+# کپی build files
 COPY --from=builder /app/build /usr/share/nginx/html
 
-# Nginx config
+# کپی custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Non-root user
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chown -R nginx:nginx /var/cache/nginx && \
+    chown -R nginx:nginx /var/log/nginx && \
+    touch /var/run/nginx.pid && \
+    chown -R nginx:nginx /var/run/nginx.pid
+
+USER nginx
+
 EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:80/ || exit 1
+
 CMD ["nginx", "-g", "daemon off;"]

@@ -70,7 +70,7 @@ export default function LoyaltyTaxCalculator() {
   const formatNumber = useCallback((value) => {
     if (value === undefined || value === null) return '';
     
-    const num = Math.round(Number(value));
+    const num = Number(value);
     if (isNaN(num)) return '';
     
     // برای اعداد بسیار بزرگ، به صورت فشرده نمایش بده
@@ -82,7 +82,8 @@ export default function LoyaltyTaxCalculator() {
       return (num / 1e6).toFixed(2) + ' میلیون';
     }
     
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    // نمایش اعداد با دقت کامل (بدون گرد کردن)
+    return num.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 0 });
   }, []);
 
   const formatCurrency = useCallback((value) => {
@@ -137,16 +138,26 @@ export default function LoyaltyTaxCalculator() {
   }, [calculatePerformanceScore]);
 
   // ==================== تابع محاسبه اصلی ====================
-  const handleCalculate = useCallback(async () => {
+  const handleCalculate = useCallback(() => {
+    // پاک کردن نتایج قبلی و شروع محاسبه جدید
     setLoading(true);
     setError('');
     setResult(null);
   
+    // استفاده از setTimeout برای اطمینان از به‌روزرسانی state
+    setTimeout(() => {
+      performCalculation();
+    }, 0);
+  }, []);
+
+  const performCalculation = () => {
     try {
+      // بررسی اطلاعات ضروری
       if (!personalInfo.fullName || !personalInfo.nationalCode) {
         throw new Error('لطفاً نام و کد ملی را وارد کنید');
       }
   
+      // محاسبه نمره عملکرد و ضریب وفاداری
       const performanceScore = calculatePerformanceScore();
       const loyaltyFactor = calculateLoyaltyFactor();
   
@@ -169,8 +180,8 @@ export default function LoyaltyTaxCalculator() {
         const declaredProfitRatio = ds ? dp / ds : 0;
         const finalizedProfitRatio = fs ? fp / fs : 0;
   
-        const declaredSalesAdj = ds * (1 + factor);
-        const finalizedSalesAdj = fs * (1 + factor);
+        const declaredSalesAdj = ds * factor;
+        const finalizedSalesAdj = fs * factor;
   
         adjustedYearData[key] = {
           label: year.label,
@@ -274,10 +285,11 @@ export default function LoyaltyTaxCalculator() {
   
     } catch (err) {
       setError(err.message || 'خطا در محاسبه');
+      setResult(null); // اطمینان از پاک شدن نتایج در صورت خطا
     } finally {
       setLoading(false);
     }
-  }, [personalInfo, yearData, maxDiscount, calculateLoyaltyFactor, calculatePerformanceScore, parseNumber]);
+  };
 
   // ==================== توابع مدیریت رکوردها ====================
   const handleSaveRecord = useCallback(() => {
@@ -317,8 +329,8 @@ export default function LoyaltyTaxCalculator() {
       '\uFEFF' + headers.join(','),
       ...savedRecords.map(r => [
         r.fullName, r.economicCode, r.nationalCode, r.performanceScore, r.loyaltyFactor,
-        r.actualDiscountPercent, Math.round(r.baseTaxDeclared), Math.round(r.baseTaxFinalized),
-        Math.round(r.finalTaxDeclared), Math.round(r.finalTaxFinalized), r.createdAt
+        r.actualDiscountPercent, r.baseTaxDeclared, r.baseTaxFinalized,
+        r.finalTaxDeclared, r.finalTaxFinalized, r.createdAt
       ].join(','))
     ].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -714,10 +726,10 @@ export default function LoyaltyTaxCalculator() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>مالیات اولیه (سود × ۰.۲۵)</td>
-                      <td>{formatCurrency(result.baseTaxDeclared)}</td>
-                      <td>{formatCurrency(result.baseTaxFinalized)}</td>
+                    <tr className="base-tax-row">
+                      <td className="base-tax-label">مالیات اولیه (سود × ۰.۲۵)</td>
+                      <td className="base-tax-cell">{formatCurrency(result.baseTaxDeclared)}</td>
+                      <td className="base-tax-cell">{formatCurrency(result.baseTaxFinalized)}</td>
                     </tr>
                     <tr>
                       <td>تخفیف ({result.actualDiscountPercent}%)</td>
@@ -725,7 +737,7 @@ export default function LoyaltyTaxCalculator() {
                       <td className="discount-cell">-{formatCurrency(result.discountAmountFinalized)}</td>
                     </tr>
                     <tr className="final-row">
-                      <td>مالیات علی‌الحساب نهایی</td>
+                      <td className="final-label">مالیات علی‌الحساب نهایی</td>
                       <td className="final-cell">{formatCurrency(result.finalTaxDeclared)}</td>
                       <td className="final-cell">{formatCurrency(result.finalTaxFinalized)}</td>
                     </tr>

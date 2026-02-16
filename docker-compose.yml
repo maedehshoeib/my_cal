@@ -1,29 +1,82 @@
-# docker-compose.yml (Production Ready)
+# =====================================
+# Docker Compose - Tax Calculator Application
+# =====================================
 version: '3.8'
 
 services:
+  # ==================== Backend Service ====================
   backend:
+    container_name: tax_calculator_backend
     build: 
       context: .
       dockerfile: Dockerfile.backend
+      target: production
     ports:
       - "8000:8000"
+    volumes:
+      # Volume برای ذخیره database
+      - backend_data:/app/data
+      # برای development می‌توانید کد را mount کنید (در production comment کنید)
+      # - ./backend:/app/backend:ro
+      # - ./main.py:/app/main.py:ro
     environment:
       - ENV=production
+      - DATABASE_PATH=/app/data/tax_calculator.db
+      - LOG_LEVEL=info
+      - CORS_ORIGINS=http://localhost,http://localhost:80
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
+      start_period: 40s
       retries: 3
+    networks:
+      - tax_calculator_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
+  # ==================== Frontend Service ====================
   frontend:
+    container_name: tax_calculator_frontend
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      target: production
     ports:
       - "80:80"
     depends_on:
       backend:
         condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_API_URL=http://localhost:8000
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+    networks:
+      - tax_calculator_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ==================== Networks ====================
+networks:
+  tax_calculator_network:
+    driver: bridge
+    name: tax_calculator_network
+
+# ==================== Volumes ====================
+volumes:
+  backend_data:
+    driver: local
+    name: tax_calculator_data
