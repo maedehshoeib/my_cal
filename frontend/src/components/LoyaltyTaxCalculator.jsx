@@ -146,7 +146,14 @@ export default function LoyaltyTaxCalculator() {
   
     try {
       // بررسی اطلاعات ضروری (از closure فعلی)
-      if (!personalInfo.fullName || !personalInfo.nationalCode) {
+      console.log('Personal Info:', personalInfo);
+      console.log('Full Name:', personalInfo.fullName, 'Length:', personalInfo.fullName?.length);
+      console.log('National Code:', personalInfo.nationalCode, 'Length:', personalInfo.nationalCode?.length);
+      console.log('Full Name trimmed:', personalInfo.fullName?.trim(), 'Length:', personalInfo.fullName?.trim()?.length);
+      console.log('National Code trimmed:', personalInfo.nationalCode?.trim(), 'Length:', personalInfo.nationalCode?.trim()?.length);
+      
+      if (!personalInfo.fullName?.trim() || !personalInfo.nationalCode?.trim()) {
+        console.log('Validation failed!');
         throw new Error('لطفاً نام و کد ملی را وارد کنید');
       }
   
@@ -282,11 +289,11 @@ export default function LoyaltyTaxCalculator() {
     } finally {
       setLoading(false);
     }
-  }, [calculateLoyaltyFactor, calculatePerformanceScore, parseNumber]);
+  }, [calculateLoyaltyFactor, calculatePerformanceScore, parseNumber, personalInfo, yearData, maxDiscount]);
 
   // ==================== توابع مدیریت رکوردها ====================
   const handleSaveRecord = useCallback(() => {
-    if (!result || !personalInfo.fullName) {
+    if (!result || !personalInfo.fullName?.trim()) {
       setError('لطفاً ابتدا محاسبه را انجام دهید');
       return;
     }
