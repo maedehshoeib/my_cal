@@ -144,15 +144,8 @@ export default function LoyaltyTaxCalculator() {
     setError('');
     setResult(null);
   
-    // استفاده از setTimeout برای اطمینان از به‌روزرسانی state
-    setTimeout(() => {
-      performCalculation();
-    }, 0);
-  }, []);
-
-  const performCalculation = () => {
     try {
-      // بررسی اطلاعات ضروری
+      // بررسی اطلاعات ضروری (از closure فعلی)
       if (!personalInfo.fullName || !personalInfo.nationalCode) {
         throw new Error('لطفاً نام و کد ملی را وارد کنید');
       }
@@ -289,7 +282,7 @@ export default function LoyaltyTaxCalculator() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [calculateLoyaltyFactor, calculatePerformanceScore, parseNumber]);
 
   // ==================== توابع مدیریت رکوردها ====================
   const handleSaveRecord = useCallback(() => {
