@@ -25,5 +25,5 @@ services:
       - "80:80"
     depends_on:
       backend:
-        condition: service_healthy
+       
     restart: unless-stopped
