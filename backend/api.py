@@ -85,3 +85,6 @@ async def calculate_declaration(request: DeclarationRequest):
         "status": "success",
         "data": report
     }
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
