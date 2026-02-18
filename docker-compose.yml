@@ -1,22 +1,20 @@
-# docker-compose.yml (Production Ready)
 version: '3.8'
 
 services:
   backend:
-  build:
-    context: .
-    dockerfile: Dockerfile.backend
-  ports:
-    - "8000:8000"
-  environment:
-    - ENV=production
-  restart: unless-stopped
-  healthcheck:
-    test: ["CMD", "curl", "-f", "http://localhost:8000/"] 
-    interval: 10s
-    timeout: 5s
-    retries: 5
-
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   frontend:
     build:
@@ -26,5 +24,5 @@ services:
       - "80:80"
     depends_on:
       backend:
-       
+        condition: service_healthy
     restart: unless-stopped
