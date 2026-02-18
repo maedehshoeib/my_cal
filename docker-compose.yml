@@ -2,19 +2,20 @@ version: '3.8'
 
 services:
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
-    ports:
-      - "8000:8000"
-    environment:
-      - ENV=production
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
+  build:
+    context: .
+    dockerfile: Dockerfile.backend
+  ports:
+    - "8000:8000"
+  environment:
+    - ENV=production
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
+    interval: 10s
+    timeout: 10s
+    retries: 10
+    start_period: 15s
 
   frontend:
     build:
