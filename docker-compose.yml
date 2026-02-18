@@ -6,7 +6,7 @@ version: '3.8'
 services:
   # ==================== Backend Service ====================
   backend:
-    container_name: tax_calculator_backend
+    container_name: tax_calculator_backend_ev
     build: 
       context: .
       dockerfile: Dockerfile.backend
@@ -41,7 +41,7 @@ services:
 
   # ==================== Frontend Service ====================
   frontend:
-    container_name: tax_calculator_frontend
+    container_name: tax_calculator_frontend_ev
     build:
       context: .
       dockerfile: Dockerfile.frontend
@@ -73,10 +73,10 @@ services:
 networks:
   tax_calculator_network:
     driver: bridge
-    name: tax_calculator_network
+    name: tax_calculator_network_ev
 
 # ==================== Volumes ====================
 volumes:
   backend_data:
     driver: local
-    name: tax_calculator_data
+    name: tax_calculator_data_ev
