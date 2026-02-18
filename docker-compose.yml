@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile.backend
     ports:
-      - "8000:8000"  # این خط درست است
+      - "8000:8000"
     environment:
       - ENV=production
     restart: unless-stopped
@@ -15,14 +15,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s  # اضافه کردن زمان شروع
+      start_period: 15s
 
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
     ports:
-      - "80:80"  # این خط درست است
+      - "80:80"
     depends_on:
       backend:
         condition: service_healthy
