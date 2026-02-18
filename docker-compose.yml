@@ -12,7 +12,7 @@ services:
       dockerfile: Dockerfile.backend
       target: production
     ports:
-      - "8000:8000"
+      - "8001:8000"
     volumes:
       # Volume برای ذخیره database
       - backend_data:/app/data
@@ -47,7 +47,7 @@ services:
       dockerfile: Dockerfile.frontend
       target: production
     ports:
-      - "80:80"
+      - "81:80"
     depends_on:
       backend:
         condition: service_healthy
