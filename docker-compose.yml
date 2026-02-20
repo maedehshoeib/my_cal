@@ -1,29 +1,78 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: mycal_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mycal_db
+      POSTGRES_USER: mycal_user
+      POSTGRES_PASSWORD: mycal_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - mycal_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mycal_user -d mycal_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Backend API Service
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    ports:
-      - "8000:8000"
+    container_name: mycal_backend
+    restart: unless-stopped
     environment:
       - ENV=production
-    restart: unless-stopped
+      - DATABASE_URL=postgresql://mycal_user:mycal_password@db:5432/mycal_db
+      - ALLOWED_ORIGINS=http://localhost,http://localhost:3000,http://frontend
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - mycal_network
+    ports:
+      - "8000:8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
+  # Frontend Service
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
-    ports:
-      - "80:80"
+    container_name: mycal_frontend
+    restart: unless-stopped
     depends_on:
       backend:
         condition: service_healthy
-    restart: unless-stopped
+    networks:
+      - mycal_network
+    ports:
+      - "80:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  mycal_network:
+    driver: bridge

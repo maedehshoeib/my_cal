@@ -1,0 +1,43 @@
+version: '3.8'
+
+# Development override for docker-compose.yml
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  db:
+    ports:
+      - "5433:5432"  # Different port for dev to avoid conflicts
+    environment:
+      POSTGRES_DB: mycal_dev_db
+      POSTGRES_USER: mycal_dev_user
+      POSTGRES_PASSWORD: mycal_dev_password
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      target: production  # Still use production stage but with dev settings
+    environment:
+      - ENV=development
+      - DEBUG=true
+      - DATABASE_URL=postgresql://mycal_dev_user:mycal_dev_password@db:5432/mycal_dev_db
+      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
+    volumes:
+      - ./backend:/app  # Mount source code for hot reloading
+    command: ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    ports:
+      - "8001:8000"  # Different port for dev
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      target: builder  # Use builder stage for development
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules  # Anonymous volume for node_modules
+    command: ["npm", "start"]
+    ports:
+      - "3001:3000"  # Different port for dev
