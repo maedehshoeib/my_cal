@@ -321,7 +321,7 @@ export default function LoyaltyTaxCalculator() {
       return;
     }
     const headers = [
-      'نام و نام خانوادگی', 'شماره اقتصادی', 'کد ملی', 'نمره کل', 'ضریب وفاداری',
+      'نام و نام خانوادگی', 'شماره اقتصادی', 'کد ملی', 'نمره کل', 'ضریب فرهنگ مالیاتی',
       'درصد تخفیف نهایی', 'مالیات اولیه ابرازی', 'مالیات اولیه قطعی',
       'مالیات ابرازی نهایی', 'مالیات قطعی نهایی', 'تاریخ ثبت'
     ];
@@ -487,7 +487,7 @@ export default function LoyaltyTaxCalculator() {
       <header className="header">
         <div className="header-content">
           <h1>محاسبه مالیات علی‌الحساب</h1>
-          <p>با در نظر گرفتن ضریب وفاداری</p>
+          <p>با در نظر گرفتن ضریب فرهنگ مالیاتی</p>
         </div>
       </header>
 
@@ -584,7 +584,7 @@ export default function LoyaltyTaxCalculator() {
 
         <div className="calculate-section">
           <button className="calculate-btn" onClick={handleCalculate} disabled={loading}>
-            {loading ? <><span className="spinner"></span> در حال محاسبه...</> : <><span className="btn-icon">🧮</span> محاسبه ضریب وفاداری و مالیات نهایی</>}
+            {loading ? <><span className="spinner"></span> در حال محاسبه...</> : <><span className="btn-icon">🧮</span> محاسبه ضریب فرهنگ مالیاتی و مالیات نهایی</>}
           </button>
         </div>
 
@@ -627,7 +627,7 @@ export default function LoyaltyTaxCalculator() {
             </div>
 
             <div className="current-year-estimate">
-              <h3 className="subsection-title">ب) تخمین سال چهارم با رگرسیون خطی (y = bx + y0)</h3>
+              <h3 className="subsection-title">ب) تخمین سال جاری با رگرسیون خطی (y = bx + y0)</h3>
               
               <div className="averages-section">
                 <h4 className="mini-title">میانگین هم‌وزن شده سه سال</h4>
@@ -660,7 +660,7 @@ export default function LoyaltyTaxCalculator() {
               </div>
 
               <div className="regression-section">
-                <h4 className="mini-title">پیش‌بینی سال چهارم (رگرسیون)</h4>
+                <h4 className="mini-title">پیش‌بینی سال جاری (رگرسیون)</h4>
                 <div className="estimate-grid">
                   <div className="estimate-item">
                     <span className="estimate-label">فروش ابرازی تخمینی:</span>
@@ -700,7 +700,7 @@ export default function LoyaltyTaxCalculator() {
                 </div>
                 
                 <div className="result-card">
-                  <div className="result-label">ضریب وفاداری</div>
+                  <div className="result-label">ضریب فرهنگ مالیاتی</div>
                   <div className="result-value">{result.loyaltyFactor}</div>
                   <div className={`loyalty-badge ${result.loyaltyStatus}`}>{result.loyaltyStatus}</div>
                 </div>
@@ -774,7 +774,7 @@ export default function LoyaltyTaxCalculator() {
                       <th>شماره اقتصادی</th>
                       <th>کد ملی</th>
                       <th>نمره کل</th>
-                      <th>ضریب وفاداری</th>
+                      <th>ضریب فرهنگ مالیاتی</th>
                       <th>تخفیف نهایی</th>
                       <th>مالیات اولیه ابرازی</th>
                       <th>مالیات اولیه قطعی</th>
