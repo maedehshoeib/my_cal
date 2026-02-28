@@ -156,7 +156,7 @@ export default function DeclarationCalculator() {
         
         {/* عنوان */}
         <div className="header-content">
-          <h1> ماشین حساب اظهارنامه مالیاتی</h1>
+          <h1> ماشین حساب تبصره 100</h1>
           <p>محاسبه خودکار مالیات عملکرد اشخاص حقیقی و حقوقی</p>
         </div>
       </header>
